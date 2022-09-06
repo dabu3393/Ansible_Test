@@ -1,0 +1,56 @@
+---
+- name: Pushing Ansible results to Slack
+  hosts: servers
+  ignore_unreachable: yes
+
+  tasks:
+  # SSH Connection Check
+  - name: Checking SSH connection
+    ping:
+    register: ping_result
+
+  - name: Unreachable servers reported
+    fail: 
+      msg: "{{ inventory_hostname }} was unable to connect via ssh"
+    when: ping_result is unreachable
+
+  # Checking disk space and making sure it stays under 70% capacity
+
+  - set_fact:
+      mount: "{{ ansible_mounts | first }}"
+      disk_limit: 0.7
+                                                                                                                        
+  - set_fact: disk_usage="{{ mount.size_total - mount.size_available }}"
+  - set_fact: disk_usage_ratio="{{ disk_usage|float / mount.size_total }}"
+  - set_fact: disk_usage_s="{{ (disk_usage|float / 1000000000) | round(1, 'common') }}GB"
+  - set_fact: disk_total_s="{{ (mount.size_total / 1000000000) | round(1, 'common') }}GB"
+  - set_fact: disk_usage_ratio_s="{{ 100 * (disk_usage_ratio|float) | round(1, 'common') }}%"
+  - set_fact: disk_limit_ratio_s="{{ (100 * disk_limit|float) |round }}%"
+                                                                                                                        
+  - debug:
+      msg: "disk usage {{ disk_usage_s }} of total {{ disk_total_s }} ({{ disk_usage_ratio_s }}) (should be within limit {{ disk_limit_ratio_s }})"
+
+  # - name:                                                                                                                 
+  #   assert:
+  #     that: ( (disk_usage|float)/mount.size_total ) < disk_limit|float
+  #     success_msg: "Disk usage {{ disk_usage_ratio_s }} is within the {{ disk_limit_ratio_s }} limit"
+  #     fail_msg: "Disk usage exceeds {{ disk_limit_ratio_s }}"
+  #   tags: disk
+  #   any_errors_fatal: true
+    
+  - name: Disk space reported
+    community.general.slack:
+      token: T035F5LU9GQ/B03SN0KBAKH/r9cWWk3wbBOQt7gFxECYcB47
+      icon_emoji: ':floppy_disk:'
+      msg: |
+          Hey! Lets take a look at the usage and space of this disk on this server.
+          --------------------------------------
+          `Server`: {{ansible_host}}
+          `Disk Usage`: {{disk_usage_s}}
+          `Disk Space`: {{disk_total_s}}
+          --------------------------------------
+      channel: '#ansible-alerts'
+      color: good
+  # - name: Checking what app is busiest
+
+  # - name: Reporting results to slack channel

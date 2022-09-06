@@ -1,0 +1,42 @@
+---
+- name: Running a list of adhoc commands as a playbook
+  hosts: servers
+
+  tasks:
+  - name: Running the 'date' command
+    command: date '+%B %d, %Y | %A %T %Z'
+    register: vm_date
+
+  - name: Running the 'disk free' command
+    command: df -H
+    register: vm_diskspace
+
+  - name: Running the 'memory free' command
+    command: free -m
+    register: vm_memspace
+
+  - name: Sharing output to slack
+    slack: 
+      token: T035F5LU9GQ/B03SN0KBAKH/r9cWWk3wbBOQt7gFxECYcB47
+      icon_emoji: ':date:'
+      msg: |
+          -----------------------------------------------------
+          Hey! :smile: This is the date and time of {{ inventory_hostname }}...
+          `Date`
+          {{ vm_date["stdout"] }}
+          -----------------------------------------------------
+
+          -----------------------------------------------------
+          And this is the disk space :floppy_disk: information...
+          `Disk Space`
+          {{ vm_diskspace["stdout"] }}
+          -----------------------------------------------------
+
+          -----------------------------------------------------
+          And this is the memory space :thought_balloon: information...
+          `Memory`
+          {{ vm_memspace["stdout"] }}
+          -----------------------------------------------------
+      channel: '#ansible-alerts'
+      color: good
+

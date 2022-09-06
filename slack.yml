@@ -1,0 +1,16 @@
+---
+- name: Pushing notifications to Slack
+  hosts: servers
+
+  tasks:
+  - name: This is sending a basic message in the random channel on Slack
+    slack:
+      token: T035F5LU9GQ/B03SN0KBAKH/r9cWWk3wbBOQt7gFxECYcB47
+      channel:
+      msg: 'This message was posted from a playbook'
+
+  - name: This is sending a basic message in the random channel on Slack with color background
+    slack:
+      token: T035F5LU9GQ/B03SN0KBAKH/r9cWWk3wbBOQt7gFxECYcB47
+      msg: 'This message has a blue colored background'
+      color: '#3446eb'

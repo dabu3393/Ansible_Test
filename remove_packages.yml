@@ -1,0 +1,34 @@
+---
+- name: Removing Apache, nginx, sos, and postgresql
+  hosts: servers
+
+  tasks: 
+  - name: Removing list of packages
+    become: yes
+    yum:
+      name: 
+        - httpd
+        - nginx
+        - sos
+        - postgresql
+      state: absent
+
+  - name: Check if packages are removed
+    package_facts:
+      manager: auto
+  
+  - name: Package test result
+    vars:
+      { "pkgs": ['httpd', 'nginx', 'sos', 'postgresql'] }
+    debug:
+      msg: '{{ item }} found!'
+    when: "item in ansible_facts.packages"
+    loop: "{{ pkgs | default([]) }}"
+
+  - name: Package test result
+    vars:
+      { "pkgs": ['httpd', 'nginx', 'sos', 'postgresql'] }
+    debug:
+      msg: "{{ item }} NOT found!"
+    when: "item not in ansible_facts.packages"
+    loop: "{{ pkgs | default([]) }}"
